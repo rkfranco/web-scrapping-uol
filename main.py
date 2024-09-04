@@ -82,8 +82,11 @@ if __name__ == '__main__':
 
     for link in links:
         f_link = link.rstrip("\n")
-        result_list.append(scrap_info(f_link, source))
-        print(f'A URL: "{f_link}" da fonte {source} foi analizada.')
+        try:
+            result_list.append(scrap_info(f_link, source))
+            print(f'A URL: "{f_link}" da fonte {source} foi analizada.')
+        except:
+            print(f'ERRO ao atualizar a URL: "{f_link}" da fonte {source}.')
 
     df = pd.DataFrame(result_list)
 
