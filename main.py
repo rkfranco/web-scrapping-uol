@@ -7,11 +7,12 @@ from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
-nltk.download('all')
-# nltk.download('punkt')
-# nltk.download('stopwords')
-# nltk.download('rslp')
-# nltk.download('wordnet')
+# nltk.download('all')
+nltk.download('punkt')
+nltk.download('punkt_tab')
+nltk.download('stopwords')
+nltk.download('rslp')
+nltk.download('wordnet')
 
 url = 'https://noticias.uol.com.br/'
 csv_sep = ';'
