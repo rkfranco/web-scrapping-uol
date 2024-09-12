@@ -1,9 +1,21 @@
+import string
+
+import nltk
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
+nltk.download('all')
+# nltk.download('punkt')
+# nltk.download('stopwords')
+# nltk.download('rslp')
+# nltk.download('wordnet')
 
 url = 'https://noticias.uol.com.br/'
-csv_sep = '\t'
+csv_sep = ';'
+stop_words = set(stopwords.words('portuguese'))
 
 
 def get_html(news_url):
@@ -61,10 +73,21 @@ def scrap_info(news_url, source):
     autors = html.find_all(attrs={'class': 'solar-author-name'})
     date, update_date = get_dates(html)
 
+    # Processamento do texto
+    content = '\n'.join(map(str, (paragraph.get_text() for paragraph in html.find_all(attrs={'class': 'bullet'}))))
+    tokens = word_tokenize(content)
+    tokens_normalizados = [word.lower() for word in tokens]
+    # TODO: Validar pontuação concatenada a tokens
+    tokens_sem_pontuacao = [word for word in tokens_normalizados if word not in string.punctuation]
+    tokens_sem_stopword = [word for word in tokens_sem_pontuacao if word not in stop_words]
+
     return {
         'title': title.get_text(),
-        'content': '\n'.join(
-            map(str, (paragraph.get_text() for paragraph in html.find_all(attrs={'class': 'bullet'})))),
+        'content': content,
+        'tokens': tokens,
+        'tokens_normalizados': tokens_normalizados,
+        'tokens_sem_pontuacao': tokens_sem_pontuacao,
+        'tokens_sem_stopword': tokens_sem_stopword,
         'autors': '\n'.join(map(str, (autor.get_text() for autor in autors))),
         'date': date,
         'update_date': update_date,
@@ -85,13 +108,13 @@ if __name__ == '__main__':
         try:
             result_list.append(scrap_info(f_link, source))
             print(f'A URL: "{f_link}" da fonte {source} foi analizada.')
-        except:
+        except Exception:
             print(f'ERRO ao atualizar a URL: "{f_link}" da fonte {source}.')
 
     df = pd.DataFrame(result_list)
 
     # Persistindo dados nos foramtos CVS, JSON e XLSX
-    df.to_csv(path_or_buf='uol_news_data.csv', sep=csv_sep, encoding='utf-8')
+    df.to_csv(path_or_buf='uol_news_data.csv', sep=csv_sep, encoding='utf-8-sig')
 
     with pd.ExcelWriter('uol_news_data.xlsx') as writer:
         df.to_excel(excel_writer=writer, sheet_name=f'{source} News')
