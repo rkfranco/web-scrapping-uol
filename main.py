@@ -1,4 +1,5 @@
 import string
+import time
 
 import nltk
 import pandas as pd
@@ -20,7 +21,20 @@ stop_words = set(stopwords.words('portuguese'))
 
 
 def get_html(news_url):
-    response = requests.get(news_url)
+    header = {
+        'referer': 'https://www.scrapingcourse.com/ecommerce/',
+        'accept-language': 'en-US,en;q=0.9',
+        'content-type': 'application/json',
+        'accept-encoding': 'gzip, deflate, br',
+        'sec-ch-device-memory': '8',
+        'sec-ch-ua': '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+        'sec-ch-ua-platform': "Windows",
+        'sec-ch-ua-platform-version': '"10.0.0"',
+        'sec-ch-viewport-width': '792',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    }
+
+    response = requests.get(news_url, headers=header)
     content = response.content
     return BeautifulSoup(content, 'html.parser')
 
@@ -76,19 +90,18 @@ def scrap_info(news_url, source):
 
     # Processamento do texto
     content = '\n'.join(map(str, (paragraph.get_text() for paragraph in html.find_all(attrs={'class': 'bullet'}))))
-    tokens = word_tokenize(content)
-    tokens_normalizados = [word.lower() for word in tokens]
-    # TODO: Validar pontuação concatenada a tokens
-    tokens_sem_pontuacao = [word for word in tokens_normalizados if word not in string.punctuation]
-    tokens_sem_stopword = [word for word in tokens_sem_pontuacao if word not in stop_words]
+    content_without_pontuation = ''.join([char for char in content if char not in string.punctuation])
+    tokens = word_tokenize(content_without_pontuation)
+    tokens_normalized = [word.lower() for word in tokens]
+    tokens_without_stopword = [word for word in tokens_normalized if word not in stop_words]
 
     return {
         'title': title.get_text(),
         'content': content,
+        'content_without_pontuation': content_without_pontuation,
         'tokens': tokens,
-        'tokens_normalizados': tokens_normalizados,
-        'tokens_sem_pontuacao': tokens_sem_pontuacao,
-        'tokens_sem_stopword': tokens_sem_stopword,
+        'tokens_normalized': tokens_normalized,
+        'tokens_without_stopword': tokens_without_stopword,
         'autors': '\n'.join(map(str, (autor.get_text() for autor in autors))),
         'date': date,
         'update_date': update_date,
@@ -100,19 +113,25 @@ def scrap_info(news_url, source):
 if __name__ == '__main__':
     source = 'UOL'
     html = get_html(url)
+    qtd_urls = 0
 
     result_list = []
     links = update_and_get_old_url(html)
 
     for link in links:
+        if qtd_urls == 75:
+            time.sleep(5)
+            qtd_urls = 0
+
         f_link = link.rstrip("\n")
         try:
             result_list.append(scrap_info(f_link, source))
             print(f'A URL: "{f_link}" da fonte {source} foi analizada.')
+            qtd_urls += 1
         except Exception:
             print(f'ERRO ao atualizar a URL: "{f_link}" da fonte {source}.')
 
-    df = pd.DataFrame(result_list)
+    df = pd.DataFrame(result_list).fillna('NaN')
 
     # Persistindo dados nos foramtos CVS, JSON e XLSX
     df.to_csv(path_or_buf='uol_news_data.csv', sep=csv_sep, encoding='utf-8-sig')
