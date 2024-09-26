@@ -6,6 +6,8 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
+from nltk.stem import RSLPStemmer
+from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
 # nltk.download('all')
@@ -94,6 +96,10 @@ def scrap_info(news_url, source):
     tokens = word_tokenize(content_without_pontuation)
     tokens_normalized = [word.lower() for word in tokens]
     tokens_without_stopword = [word for word in tokens_normalized if word not in stop_words]
+    stemmer = RSLPStemmer()  # alternativas: PorterStemmer, LancasterStemmer, SnowballStemmer
+    tokens_stemmed = [[stemmer.stem(word) for word in token_list] for token_list in tokens_without_stopword]
+    lemmatizer = WordNetLemmatizer()
+    tokens_lemmatized = [[lemmatizer.lemmatize(word) for word in token_list] for token_list in tokens_without_stopword]
 
     return {
         'title': title.get_text(),
@@ -102,6 +108,8 @@ def scrap_info(news_url, source):
         'tokens': tokens,
         'tokens_normalized': tokens_normalized,
         'tokens_without_stopword': tokens_without_stopword,
+        'tokens_stemmed': tokens_stemmed,
+        'tokens_lemmatized': tokens_lemmatized,
         'autors': '\n'.join(map(str, (autor.get_text() for autor in autors))),
         'date': date,
         'update_date': update_date,
