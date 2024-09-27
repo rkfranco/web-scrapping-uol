@@ -97,9 +97,9 @@ def scrap_info(news_url, source):
     tokens_normalized = [word.lower() for word in tokens]
     tokens_without_stopword = [word for word in tokens_normalized if word not in stop_words]
     stemmer = RSLPStemmer()  # alternativas: PorterStemmer, LancasterStemmer, SnowballStemmer
-    tokens_stemmed = [[stemmer.stem(word) for word in token_list] for token_list in tokens_without_stopword]
+    tokens_stemmed = [stemmer.stem(token) for token in tokens_without_stopword]
     lemmatizer = WordNetLemmatizer()
-    tokens_lemmatized = [[lemmatizer.lemmatize(word) for word in token_list] for token_list in tokens_without_stopword]
+    tokens_lemmatized = [lemmatizer.lemmatize(token) for token in tokens_without_stopword]
 
     return {
         'title': title.get_text(),
