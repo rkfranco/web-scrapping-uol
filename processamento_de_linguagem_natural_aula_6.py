@@ -9,7 +9,7 @@ Original file is located at
 
 # Bibliotecas de Sistema e Gerenciamento de Arquivos
 import os  # Manipulação de caminhos de arquivos
-from google.colab import files  # Upload de arquivos no Google Colab
+# from google.colab import files  # Upload de arquivos no Google Colab
 import math  # Funções matemáticas (ex.: logaritmos, arredondamentos)
 
 # Processamento de Linguagem Natural
@@ -58,7 +58,7 @@ from sklearn.metrics.pairwise import cosine_similarity  # Cálculo de similarida
 """
 
 # Etapa 1: Upload dos arquivos
-uploaded = files.upload()
+# uploaded = files.upload()
 
 uol_news = pd.read_csv('uol_news_data.csv', sep=';', encoding='utf-8-sig')
 pd.set_option('display.max_rows', 150)
@@ -164,7 +164,7 @@ Esse código implementa uma estratégia para evitar a repetição desnecessária
 """
 
 # Caminho de saída para o arquivo CSV
-output_file_csv = '/content/textos_processados.csv'
+output_file_csv = r'textos_processados.csv'
 
 # Salvando o DataFrame no formato CSV
 df.to_csv(output_file_csv, index=False, encoding='utf-8')
@@ -172,7 +172,7 @@ df.to_csv(output_file_csv, index=False, encoding='utf-8')
 print(f"Arquivo CSV salvo em: {output_file_csv}")
 
 # Caminho do arquivo CSV gerado anteriormente
-csv_file_path = '/content/textos_processados.csv'
+csv_file_path = r'textos_processados.csv'
 
 # Leitura do arquivo CSV para um DataFrame
 df = pd.read_csv(csv_file_path)
@@ -242,6 +242,7 @@ for index, row in enumerate(df_total_tokens['Total de Tokens']):
     barplot.text(index, row, f'{int(row)}', color='black', ha="center", va="bottom")
 
 # Ajustes de título e rótulos
+plt.title('Total de Tokens por Documento')
 plt.title('Total de Tokens por Documento')
 plt.xlabel('Documento')
 plt.ylabel('Total de Tokens')
