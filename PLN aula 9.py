@@ -10,6 +10,7 @@ import spacy
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from transformers import MBartForConditionalGeneration, MBart50Tokenizer, PreTrainedModel
+from transformers import T5Tokenizer, T5ForConditionalGeneration
 
 qtd_rows = 30
 
@@ -22,6 +23,9 @@ nlp = spacy.load("pt_core_news_lg")
 
 # Carregar modelo SBERT
 sbert_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+
+tokenizer_t5 = T5Tokenizer.from_pretrained("unicamp-dl/ptt5-base-portuguese-vocab")
+model_t5 = T5ForConditionalGeneration.from_pretrained("unicamp-dl/ptt5-base-portuguese-vocab")
 
 
 def busca_semantica(query: str,
@@ -82,9 +86,28 @@ def resumo_abstrativo(doc: str, model: SentenceTransformer, tokenizer: PreTraine
     return summary
 
 
+def resumo_abstrativo_t5(
+        doc: str,
+        model: SentenceTransformer,
+        tokenizer: PreTrainedModel,
+        max_length: int = 70,
+        min_length: int = 10) -> str:
+    # Preparar a entrada para o T5
+    inputs = tokenizer.encode(doc, return_tensors="pt", max_length=512, truncation=True)
+
+    # Gerar o resumo
+    summary_ids = model.generate(inputs, max_length=max_length, min_length=min_length, length_penalty=10.0,
+                                 num_beams=20, early_stopping=True)
+
+    # Decodificar o resumo gerado
+    summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+
+    return summary
+
+
 if __name__ == '__main__':
     df = pd.read_csv('uol_news_data.csv', sep=';', encoding='utf-8-sig')
-    data = df['content']
+    data = df['content'][:30]
 
     # Gerar embeddings dos documentos
     doc_embeddings = sbert_model.encode(data, convert_to_numpy=True)
@@ -94,7 +117,9 @@ if __name__ == '__main__':
 
     print('--------------- ABSTRATIVO ---------------')
     print(resumo_abstrativo(data[0], mbart_model, tokenizer))
-
+    print('------------- ABSTRATIVO T5 --------------')
+    print(resumo_abstrativo_t5(data[0], model_t5, tokenizer_t5))
+    print('------------ BUSCA SEMANTICA -------------')
     busca_semantica(
         'Lyne acredita que piloto tentou pousar avião no mar. Segundo ele, os danos nas asas, flaps e flaperons do avião sugerem que a aeronave estava envolvida em um pouso controlado, semelhante ao do Capitão Chesley Sully Sullenberger no Rio Hudson, em 2009 —história que virou até filme. Isso justifica sem sombra de dúvida a alegação original de que o [voo] MH370 tinha combustível e motores funcionando quando sofreu um magistral pouso controlado e não um acidente em alta velocidade com falta de combustível',
-        sbert_model, df, doc_embeddings, top_n=10)
+        sbert_model, df, doc_embeddings, top_n=1)

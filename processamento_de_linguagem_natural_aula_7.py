@@ -25,11 +25,11 @@ Nesta etapa, importamos bibliotecas essenciais para o processamento de linguagem
 **Essas etapas já foram abordadas em aulas anteriores!**
 """
 
-import pandas as pd
+import string
+
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-import string
 
 # Baixar stop words do NLTK
 nltk.download('stopwords')
@@ -54,6 +54,7 @@ documents = [
     "Ciência da Computação é o curso do futuro!"
 ]
 
+
 # Função para tokenizar, normalizar e remover stopwords e pontuação
 def preprocess_document(doc):
     # Tokenização e normalização (lower case)
@@ -61,6 +62,7 @@ def preprocess_document(doc):
     # Remoção de stopwords e pontuação
     tokens = [word for word in tokens if word not in stop_words_pt and word not in string.punctuation]
     return tokens
+
 
 # Aplicando o pré-processamento nos documentos
 processed_documents = [preprocess_document(doc) for doc in documents]
@@ -80,9 +82,11 @@ Isso fornece a base para cálculos de similaridade e outras análises quantitati
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
 
-texto_processado_csv = pd.read_csv("textos_processados.csv").head(10)
+qtd_rows = 500
+texto_processado_csv = pd.read_csv("textos_processados.csv").head(qtd_rows)
 
-df_documents = pd.DataFrame({'Original Document': texto_processado_csv['documento'], 'Processed Document': texto_processado_csv['texto_processado']})
+df_documents = pd.DataFrame({'Original Document': texto_processado_csv['documento'],
+                             'Processed Document': texto_processado_csv['texto_processado']})
 
 # Vetorização com TF-IDF
 vectorizer = TfidfVectorizer()
@@ -91,7 +95,7 @@ tfidf_matrix = vectorizer.fit_transform(texto_processado_csv["texto_processado"]
 # Convertendo a matriz TF-IDF para um dataframe para visualização
 tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=vectorizer.get_feature_names_out())
 
-df_documents
+print(df_documents)
 
 """### Cálculo da Similaridade por Cosseno
 
@@ -110,8 +114,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 cosine_sim = cosine_similarity(tfidf_matrix)
 
 # Convertendo para um DataFrame para melhor visualização
-cosine_sim_df = pd.DataFrame(cosine_sim, index=[f"Doc{i+1}" for i in range(0,10)],
-                             columns=[f"Doc{i+1}" for i in range(0,10)])
+cosine_sim_df = pd.DataFrame(cosine_sim, index=[f"Doc{i + 1}" for i in range(0, qtd_rows)],
+                             columns=[f"Doc{i + 1}" for i in range(0, qtd_rows)])
 
 # Exibindo a matriz de similaridade por cosseno
 cosine_sim_df
@@ -141,7 +145,7 @@ sns.heatmap(cosine_sim_df, annot=True, cmap='Blues', linewidths=0.5)
 plt.title('Heatmap da Similaridade por Cosseno entre Documentos')
 
 # Exibindo o gráfico
-plt.show()
+# plt.show()
 
 """### Sistema de Recomendação de Documentos com Base em Similaridade
 
@@ -156,6 +160,7 @@ Nesta seção, implementamos um **sistema de recomendação de documentos** util
 Esse sistema de recomendação ajusta os resultados com base nos termos fornecidos, facilitando a recuperação dos documentos mais similares à consulta.
 
 """
+
 
 def recomendar_documentos_ajustada(consulta, df, tfidf_matrix, vectorizer):
     # Preprocessar a consulta da mesma maneira que os documentos
@@ -178,13 +183,14 @@ def recomendar_documentos_ajustada(consulta, df, tfidf_matrix, vectorizer):
 
     return recomendacoes
 
+
 # Entrada pelo usuário
 termo_busca = input("Digite os termos de busca: ")
 
 # Obter as recomendações ajustadas com valores de similaridade
 recomendacoes_df_ajustada = recomendar_documentos_ajustada(termo_busca, df_documents, tfidf_matrix, vectorizer)
 
-recomendacoes_df_ajustada
+print(recomendacoes_df_ajustada)
 
 """### Considerações sobre o Uso de Lematização ou Stemming
 
@@ -226,7 +232,7 @@ kmeans.fit(tfidf_matrix)
 df_documents['Cluster'] = kmeans.labels_
 
 # Exibindo os documentos e seus respectivos clusters
-df_documents[['Original Document', 'Cluster']]
+print(df_documents[['Original Document', 'Cluster']])
 
 """### Visualização dos Clusters
 
@@ -245,11 +251,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Reduzindo a dimensionalidade para 2 componentes principais
-pca = PCA(n_components=2)
+pca = PCA(n_components=3)
 reduced_features = pca.fit_transform(tfidf_matrix.toarray())
 
 # Plotando os clusters em um gráfico 2D
-plt.figure(figsize=(8, 6))
+fig = plt.figure(figsize=(8, 6))
+ax = fig.add_subplot(projection='3d')
 
 # Usando um mapa de cores com base no número de clusters
 cmap = plt.get_cmap('tab10')  # Escolha um mapa de cores (ex.: 'tab10', 'viridis', 'plasma', etc.)
@@ -258,12 +265,13 @@ colors = [cmap(i) for i in np.linspace(0, 1, num_clusters)]
 # Plotando os pontos e colorindo de acordo com os clusters
 for i in range(num_clusters):
     points = reduced_features[df_documents['Cluster'] == i]
-    plt.scatter(points[:, 0], points[:, 1], c=[colors[i]], label=f'Cluster {i+1}')
+    ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=[colors[i]], label=f'Cluster {i + 1}')
 
-plt.title('Document Clusters (reduzido para 2D via PCA)')
-plt.xlabel('PCA Component 1')
-plt.ylabel('PCA Component 2')
-plt.legend()
+ax.set_title('Document Clusters (reduzido para 2D via PCA)')
+ax.set_xlabel('PCA Component 1')
+ax.set_zlabel('PCA Component 2')
+ax.set_ylabel('PCA Component 3')
+ax.legend()
 plt.show()
 
 """### Interpretação dos pontos no gráfico:
@@ -283,7 +291,6 @@ Ao aplicar PCA a um conjunto de vetores TF-IDF, você obtém uma representação
 # Na próxima aula...
 """
 
-import gensim
 from gensim.models import Word2Vec
 
 # Usando os documentos já pré-processados

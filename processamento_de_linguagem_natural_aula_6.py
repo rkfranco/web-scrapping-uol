@@ -65,8 +65,8 @@ pd.set_option('display.max_rows', 150)
 
 # Etapa 3: Criar o DataFrame
 df = pd.DataFrame({
-    'documento': uol_news['title'][0:11],
-    'texto_bruto': uol_news['content'][0:11]
+    'documento': uol_news['title'],
+    'texto_bruto': uol_news['content']
 })
 
 df = df.dropna(subset=['texto_bruto'])
