@@ -118,7 +118,7 @@ cosine_sim_df = pd.DataFrame(cosine_sim, index=[f"Doc{i + 1}" for i in range(0, 
                              columns=[f"Doc{i + 1}" for i in range(0, qtd_rows)])
 
 # Exibindo a matriz de similaridade por cosseno
-cosine_sim_df
+print(cosine_sim_df)
 
 """### Visualização da Similaridade entre Documentos: Heatmap
 
